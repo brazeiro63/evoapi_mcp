@@ -393,19 +393,19 @@ def check_phone_exists(phone_number: str) -> str:
 from message_controller import MessageController
 
 
-@mcp.tool(name="export_all_contact_messages")
-def export_all_contact_messages(remote_jid: str) -> str:
+@mcp.tool(name="fecth_all_contact_messages")
+def fecth_all_contact_messages(remote_jid: str) -> str:
     """
-    Exporta todas as mensagens trocadas com um contato específico do WhatsApp.
+    Retorna todas as mensagens trocadas com um contato específico do WhatsApp.
 
     Esta ferramenta recupera todo o histórico disponível de mensagens de um contato
-    e salva em um arquivo JSON, retornando o caminho do arquivo gerado.
+    retornando as mensagens em formato csv.
 
     Args:
         remote_jid (str): JID do contato no formato 'número@c.us'.
 
     Returns:
-        str: Caminho do arquivo JSON contendo as mensagens exportadas.
+        str: As mensagens exportadas em formato csv.
     """
     controller = MessageController()
     filepath = controller.fetch_all_messages(remote_jid)
@@ -416,15 +416,15 @@ def export_all_contact_messages(remote_jid: str) -> str:
     )
 
 
-@mcp.tool(name="export_interval_contact_messages")
-def export_interval_contact_messages(
+@mcp.tool(name="fecth_interval_contact_messages")
+def fecth_interval_contact_messages(
     remote_jid: str, start_date: str, end_date: str
 ) -> str:
     """
-    Exporta as mensagens trocadas com um contato dentro de um intervalo de datas.
+    Retorna todas as mensagens trocadas com um contato específico do WhatsApp dentro de um intervalo de datas..
 
     Esta ferramenta busca todas as mensagens trocadas com o contato especificado
-    entre `start_date` e `end_date`, e salva em um arquivo JSON.
+    entre `start_date` e `end_date`, retornando as mensagens em formato csv.
 
     Args:
         remote_jid (str): JID do contato no formato 'número@c.us'.
@@ -432,7 +432,7 @@ def export_interval_contact_messages(
         end_date (str): Data e hora de término (formato 'YYYY-MM-DD HH:MM:SS').
 
     Returns:
-        str: Caminho do arquivo JSON contendo as mensagens exportadas.
+        str: As mensagens exportadas em formato csv.
     """
     controller = MessageController()
     filepath = controller.get_interval_messages(remote_jid, start_date, end_date)
@@ -450,5 +450,5 @@ def export_interval_contact_messages(
 
 if __name__ == "__main__":
 
-    #mcp.run(transport="stdio")
-    print(export_all_contact_messages("556192172427@s.whatsapp.net"))
+    mcp.run(transport="stdio")
+    #print(fecth_all_contact_messages("556192172427@s.whatsapp.net"))

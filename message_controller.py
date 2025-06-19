@@ -43,7 +43,7 @@ class MessageController:
             remoteJid=remote_jid
         )
 
-    def get_interval_messages(self, remote_jid: str, start: str, end: str):
+    def fetch_interval_messages(self, remote_jid: str, start: str, end: str):
         """
         Busca mensagens de um contato entre duas datas e retorna o caminho do arquivo JSON salvo.
 
@@ -59,7 +59,7 @@ class MessageController:
             print(f"Formato de data inválido: {e}")
             return None
 
-        return self.message_service.get_interval_messages(
+        return self.message_service.fetch_interval_messages(
             instance_id=self.instance_id,
             instance_token=self.instance_token,
             date_ini=dt_start,
