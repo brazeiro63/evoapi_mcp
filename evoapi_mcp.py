@@ -451,4 +451,4 @@ def fecth_interval_contact_messages(
 if __name__ == "__main__":
 
     mcp.run(transport="stdio")
-    #print(fecth_all_contact_messages("556192172427@s.whatsapp.net"))
+    #print(get_group_messages("120363400095683544@g.us", "2025-05-01 00:00:00", "2025-05-31 23:59:59"))

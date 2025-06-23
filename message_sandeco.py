@@ -42,7 +42,7 @@ class MessageSandeco:
         self.server_url = self.data.get("server_url")
         self.apikey = self.data.get("apikey")
 
-        data_block = self.data.get("data")
+        data_block = self.data
 
         self.message_type = data_block.get("messageType")
 
@@ -84,7 +84,7 @@ class MessageSandeco:
 
     def extract_specific_data(self):
 
-        data_block = self.data.get("data")
+        data_block = self.data #.get("data")
         self.message_block = data_block.get("message")
 
         """Extrai dados específicos e os define como atributos da classe."""
