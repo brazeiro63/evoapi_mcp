@@ -4,13 +4,38 @@ from mcp.server.fastmcp import FastMCP
 from group_controller import GroupController
 from datetime import datetime
 from send_message import SendMessage
+from instance_config import InstanceConfig
 
 # Inicializa o servidor FastMCP com nome "pong"
 mcp = FastMCP("evoapi_mcp")
 
 
+@mcp.tool(name="list_instances")
+def list_instances() -> str:
+    """
+    Lista as instâncias Evolution API disponíveis (sem expor tokens).
+    """
+    instances = InstanceConfig.load_instances()
+
+    if not instances:
+        return (
+            "Nenhuma instância configurada. Defina EVO_INSTANCES com ids separados por "
+            "vírgula e, para cada id, as variáveis EVO_INSTANCE_<ID>_URL, "
+            "EVO_INSTANCE_<ID>_TOKEN e opcionalmente EVO_INSTANCE_<ID>_NAME. "
+            "Caso use o formato legado, defina EVO_API_URL e EVO_API_TOKEN."
+        )
+
+    default_id = InstanceConfig.get_default_id()
+    result = "Instâncias disponíveis:\n"
+    for inst in instances:
+        default_mark = " (padrão)" if inst.id == default_id else ""
+        result += f"- id: {inst.id}, nome: {inst.name}, url: {inst.url}{default_mark}\n"
+
+    return result
+
+
 @mcp.tool(name="get_groups")
-def get_groups() -> str:
+def get_groups(instance_id: str | None = None) -> str:
     """
     Recupera e retorna uma lista formatada de grupos do WhatsApp disponíveis.
 
@@ -23,7 +48,7 @@ def get_groups() -> str:
         str: Lista de grupos no formato:
             "Grupo ID: <id>, Nome: <nome>\n"
     """
-    controller = GroupController()
+    controller = GroupController(instance_id)
     groups = controller.fetch_groups()
 
     string_groups = ""
@@ -34,7 +59,7 @@ def get_groups() -> str:
 
 
 @mcp.tool(name="get_group_messages")
-def get_group_messages(group_id: str, start_date: str, end_date: str) -> str:
+def get_group_messages(group_id: str, start_date: str, end_date: str, instance_id: str | None = None) -> str:
     """
     Recupera as mensagens enviadas em um grupo do WhatsApp dentro de um intervalo de datas especificado.
 
@@ -56,7 +81,7 @@ def get_group_messages(group_id: str, start_date: str, end_date: str) -> str:
 
         Cada mensagem é separada por um delimitador visual.
     """
-    controller = GroupController()
+    controller = GroupController(instance_id)
     messages = controller.get_messages(group_id, start_date, end_date)
 
     messages_string = ""
@@ -70,7 +95,7 @@ def get_group_messages(group_id: str, start_date: str, end_date: str) -> str:
     return messages_string
 
 
-def _send_message(recipient: str, message: str) -> str:
+def _send_message(recipient: str, message: str, instance_id: str | None = None) -> str:
     """
     Método privado que encapsula a lógica comum de envio de mensagens.
 
@@ -81,14 +106,14 @@ def _send_message(recipient: str, message: str) -> str:
     Returns:
         str: Mensagem de sucesso ou erro
     """
-    send = SendMessage()
+    send = SendMessage(instance_id)
 
     send.textMessage(recipient, message)
     return "Mensagem enviada com sucesso"
 
 
 @mcp.tool(name="send_message_to_group")
-def send_message_to_group(group_id: str, message: str) -> str:
+def send_message_to_group(group_id: str, message: str, instance_id: str | None = None) -> str:
     """
     Envia uma mensagem de texto para um grupo específico do WhatsApp.
 
@@ -115,11 +140,11 @@ def send_message_to_group(group_id: str, message: str) -> str:
             - Falha na autenticação
             - Formato inválido de mensagem
     """
-    return _send_message(group_id, message)
+    return _send_message(group_id, message, instance_id)
 
 
 @mcp.tool(name="send_message_to_phone")
-def send_message_to_phone(cellphone: str, message: str) -> str:
+def send_message_to_phone(cellphone: str, message: str, instance_id: str | None = None) -> str:
     """
     Envia uma mensagem de texto para um número de telefone específico via WhatsApp.
     Somente use para enviar mensagens para números de telefone
@@ -151,7 +176,7 @@ def send_message_to_phone(cellphone: str, message: str) -> str:
             - Falha na autenticação
             - Formato inválido de mensagem
     """
-    return _send_message(cellphone, message)
+    return _send_message(cellphone, message, instance_id)
 
 
 # ----------------------------------------------
@@ -161,7 +186,7 @@ from contact_controller import ContactController
 
 
 @mcp.tool(name="get_contacts")
-def get_contacts() -> str:
+def get_contacts(instance_id: str | None = None) -> str:
     """
     Recupera e retorna uma lista formatada de contatos do WhatsApp disponíveis.
 
@@ -174,7 +199,7 @@ def get_contacts() -> str:
         str: Lista de contatos no formato:
             "Contato ID: <id>, JID: <remote_jid>, Nome: <push_name>\n"
     """
-    controller = ContactController()
+    controller = ContactController(instance_id)
     contacts = controller.fetch_contacts()
 
     string_contacts = ""
@@ -185,7 +210,7 @@ def get_contacts() -> str:
 
 
 @mcp.tool(name="get_contacts_by_name")
-def get_contacts_by_name(name: str) -> str:
+def get_contacts_by_name(name: str, instance_id: str | None = None) -> str:
     """
     Recupera e retorna uma lista formatada de contatos do WhatsApp disponíveis.
 
@@ -198,7 +223,7 @@ def get_contacts_by_name(name: str) -> str:
         str: Lista de contatos no formato:
             "Contato ID: <id>, JID: <remote_jid>, Nome: <push_name>\n"
     """
-    controller = ContactController()
+    controller = ContactController(instance_id)
     contacts = controller.fetch_contacts_by_name(name)
 
     string_contacts = ""
@@ -209,7 +234,7 @@ def get_contacts_by_name(name: str) -> str:
 
 
 @mcp.tool(name="get_contacts_by_phone_number")
-def get_contacts_by_phone_number(phone_number: str) -> str:
+def get_contacts_by_phone_number(phone_number: str, instance_id: str | None = None) -> str:
     """
     Recupera e retorna uma lista formatada de contatos do WhatsApp disponíveis.
 
@@ -222,7 +247,7 @@ def get_contacts_by_phone_number(phone_number: str) -> str:
         str: Lista de contatos no formato:
             "Contato ID: <id>, JID: <remote_jid>, Nome: <push_name>\n"
     """
-    controller = ContactController()
+    controller = ContactController(instance_id)
     contacts = controller.fetch_contacts_by_phone_number(phone_number)
 
     string_contacts = ""
@@ -233,7 +258,7 @@ def get_contacts_by_phone_number(phone_number: str) -> str:
 
 
 @mcp.tool(name="find_contact_by_number")
-def find_contact_by_number(phone_number: str) -> str:
+def find_contact_by_number(phone_number: str, instance_id: str | None = None) -> str:
     """
     Localiza um contato pelo número de telefone e retorna suas informações detalhadas.
 
@@ -257,7 +282,7 @@ def find_contact_by_number(phone_number: str) -> str:
 
         Se o contato não for encontrado, retorna uma mensagem informativa.
     """
-    controller = ContactController()
+    controller = ContactController(instance_id)
     contact = controller.find_contact_by_number(phone_number)
 
     if not contact:
@@ -290,7 +315,7 @@ def find_contact_by_number(phone_number: str) -> str:
 
 
 @mcp.tool(name="get_contact_profile_picture")
-def get_contact_profile_picture(remote_jid: str) -> str:
+def get_contact_profile_picture(remote_jid: str, instance_id: str | None = None) -> str:
     """
     Recupera a URL da foto de perfil de um contato específico.
 
@@ -304,7 +329,7 @@ def get_contact_profile_picture(remote_jid: str) -> str:
         str: URL da imagem de perfil do contato ou uma mensagem informativa caso
              não seja possível obter a imagem.
     """
-    controller = ContactController()
+    controller = ContactController(instance_id)
     picture_url = controller.get_profile_picture(remote_jid)
 
     if picture_url:
@@ -314,7 +339,7 @@ def get_contact_profile_picture(remote_jid: str) -> str:
 
 
 @mcp.tool(name="get_contact_common_groups")
-def get_contact_common_groups(remote_jid: str) -> str:
+def get_contact_common_groups(remote_jid: str, instance_id: str | None = None) -> str:
     """
     Recupera os grupos em comum com um contato específico.
 
@@ -332,8 +357,8 @@ def get_contact_common_groups(remote_jid: str) -> str:
 
         Se nenhum grupo em comum for encontrado, retorna uma mensagem informativa.
     """
-    contact_controller = ContactController()
-    group_controller = GroupController()
+    contact_controller = ContactController(instance_id)
+    group_controller = GroupController(instance_id)
 
     # Busca o contato para obter o nome
     contact = contact_controller.find_contact_by_jid(remote_jid)
@@ -361,7 +386,7 @@ def get_contact_common_groups(remote_jid: str) -> str:
 
 
 @mcp.tool(name="check_phone_exists")
-def check_phone_exists(phone_number: str) -> str:
+def check_phone_exists(phone_number: str, instance_id: str | None = None) -> str:
     """
     Verifica se um número de telefone está registrado no WhatsApp.
 
@@ -375,7 +400,7 @@ def check_phone_exists(phone_number: str) -> str:
     Returns:
         str: Mensagem indicando se o número existe ou não no WhatsApp.
     """
-    controller = ContactController()
+    controller = ContactController(instance_id)
     exists = controller.check_contact_exists(phone_number)
 
     if exists:
@@ -394,7 +419,7 @@ from message_controller import MessageController
 
 
 @mcp.tool(name="fecth_all_contact_messages")
-def fecth_all_contact_messages(remote_jid: str) -> str:
+def fecth_all_contact_messages(remote_jid: str, instance_id: str | None = None) -> str:
     """
     Retorna todas as mensagens trocadas com um contato específico do WhatsApp.
 
@@ -407,7 +432,7 @@ def fecth_all_contact_messages(remote_jid: str) -> str:
     Returns:
         str: As mensagens exportadas em formato csv.
     """
-    controller = MessageController()
+    controller = MessageController(instance_id)
     filepath = controller.fetch_all_messages(remote_jid)
     return (
         f"Arquivo de mensagens exportado: {filepath}"
@@ -418,7 +443,7 @@ def fecth_all_contact_messages(remote_jid: str) -> str:
 
 @mcp.tool(name="fecth_interval_contact_messages")
 def fecth_interval_contact_messages(
-    remote_jid: str, start_date: str, end_date: str
+    remote_jid: str, start_date: str, end_date: str, instance_id: str | None = None
 ) -> str:
     """
     Retorna todas as mensagens trocadas com um contato específico do WhatsApp dentro de um intervalo de datas..
@@ -434,8 +459,8 @@ def fecth_interval_contact_messages(
     Returns:
         str: As mensagens exportadas em formato csv.
     """
-    controller = MessageController()
-    filepath = controller.get_interval_messages(remote_jid, start_date, end_date)
+    controller = MessageController(instance_id)
+    filepath = controller.fetch_interval_messages(remote_jid, start_date, end_date)
     return (
         f"Arquivo de mensagens exportado: {filepath}"
         if filepath
